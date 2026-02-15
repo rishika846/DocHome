@@ -36,7 +36,7 @@ const Navbar = () => {
 
             </NavLink>
            <button
-           onClick={() => window.location.href = 'http://localhost:5174'}
+           onClick={() => window.location.href = import.meta.env.VITE_API_URL }
            className='py-1'>      
   Admin Panel
 </button>

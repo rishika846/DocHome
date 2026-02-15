@@ -9,6 +9,7 @@ const DoctorContextProvider = ({ children }) => {
   const [appointments, setAppointments] = useState([])
   const[dashData,setDashData]=useState(false)
   const [profileData,setProfileData]=useState(false)
+  //getAppointments
   const getAppointments = async () => {
   try {
     const { data } = await axios.get(backendUrl + '/api/doctor/appointments', {

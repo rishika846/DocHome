@@ -9,7 +9,7 @@ const authDoc= async (req, res, next) => {
     }
 
     const token_decode = jwt.verify(dtoken, process.env.JWT_SECRET)
-    console.log("heyyyyyyyyy")
+    
       req.docId = token_decode.id || token_decode._id
 
     next()

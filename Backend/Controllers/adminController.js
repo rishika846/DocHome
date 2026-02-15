@@ -62,8 +62,12 @@ const addDoctor = async (req, res) => {
         // await newDoctor.save()
         const savedDoctor = await newDoctor.save();
         console.log("Saved Doctor:", savedDoctor);
+        if(savedDoctor){
+             res.json({ success: true, message: "doctor added" })
 
-        res.json({ success: true, message: "doctor added" })
+        }
+
+       
 
     } catch (error) {
         console.log(error)
@@ -72,15 +76,18 @@ const addDoctor = async (req, res) => {
     }
 }
 // API FOR ADMIN LOGIN
-const loginAdmin = (req, res) => {
+const loginAdmin = async  (req, res) => {
     try {
-        console.log(req.body);
+        // console.log(req.body);
         const { email, password } = req.body;
+        const salt = await bcrypt.genSalt(10)
+        const hashedAdminPassword = await bcrypt.hash(password, salt)
+
         if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
             const atoken = jwt.sign(
-                { email, password }, // payload
+                { email, hashedAdminPassword},
                 process.env.JWT_SECRET,
-                { expiresIn: '7d' } // optional expiry
+                { expiresIn: '7d' } 
             );
             res.json({ success: true, atoken });
         } else {
@@ -96,9 +103,9 @@ const loginAdmin = (req, res) => {
 const allDoctors = async (req, res) => {
     try {
         const doctors = await doctorModel.find({}).select('-password')
-        if (doctors.length === 0) {
-            return res.json({ success: true, doctors: [], message: "No doctors found" });
-        }
+        // if (doctors.length === 0) {
+        //     return res.json({ success: true, doctors: [], message: "No doctors found" });
+        // }
         console.log(doctors)
         res.json({ success: true, doctors })
 
@@ -125,7 +132,7 @@ const appointmentsAdmin=async(req,res)=>{
  const appointmentCancel=async(req,res)=>{
   try {
   
-     const {appointmentId}=req.body
+     const {appointmentId}=req.body;
      const appointmentData=await appointmentModel.findById(appointmentId)
 
      

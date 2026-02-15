@@ -8,7 +8,9 @@ const Footer = () => {
         {/* left side */}
         <div>
             <img className='mb-5 w-40' src={assets.DocHomeLogo} alt="" />
-            <p className='w-full md:w-2/3 text-gray-600 leading-6'>Lorem Ipsumis simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book.</p>
+            <p className='w-full md:w-2/3 text-gray-600 leading-6'>At DOCHOME, we believe healthcare should be simple, accessible, and stress-free. Book appointments with trusted doctors, track your health records, and get care when you need it — all in one place. Your well-being is our priority.
+
+</p>
 
         </div>
         {/* center */}
@@ -27,7 +29,7 @@ const Footer = () => {
             <p className='text-xl font-medium mb-5'>Get in Touch</p>
             <ul className='flex flex-col gap-2  text-gray-600'>
                 <li>+1-212-456-7890</li>
-                <li>greatstackdev@gmail.com</li>
+                <li>docHome@gmail.com</li>
             </ul>
 
         </div>
@@ -35,7 +37,7 @@ const Footer = () => {
         {/* copyright text */}
         <div>
             <hr />
-            <p className='py-5 text-sm text-center'>Copyright © 2024 GreatStack - All Right Reserved.</p>
+            <p className='py-5 text-sm text-center'>Copyright © 2025 @ DocHome - All Right Reserved.</p>
         </div>
        
     </div>

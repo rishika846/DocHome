@@ -7,7 +7,7 @@ import { toast } from 'react-toastify'
 
 
 const DoctorProfile = () => {
-  const {dtoken,setProfileData,profileData,getDashData,getProfileData,backendUrl}=useContext(DoctorContext)
+  const {dtoken,setProfileData,profileData,getProfileData,backendUrl}=useContext(DoctorContext)
   const {currency}=useContext(AppContext)
   const [isEdit,setIsEdit]=useState(false)
   const updateProfile=async()=>{

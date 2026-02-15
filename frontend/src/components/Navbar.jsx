@@ -36,7 +36,8 @@ const Navbar = () => {
 
             </NavLink>
            <button
-           onClick={() => window.location.href = 'http://localhost:5174'}
+           onClick={() => window.location.href = import.meta.env.VITE_ADMIN_FRONTEND
+}
            className='py-1'>      
   Admin Panel
 </button>

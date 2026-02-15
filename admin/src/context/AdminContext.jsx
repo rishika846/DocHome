@@ -15,7 +15,7 @@ const AdminContextProvider = (props) => {
     //to get all doctors
     const getAllDoctors=async()=>{
       try {
-        const {data}=await axios.post(backendUrl+'/api/admin/all-doctors',{},{headers:{atoken}});
+        const {data}=await axios.get(backendUrl+'/api/admin/all-doctors',{headers:{atoken}});
         if(data.success){
           setDoctors(data.doctors)
           console.log(data.doctors)
@@ -55,12 +55,14 @@ const AdminContextProvider = (props) => {
       }
 
     }
+    //get all appointments
 const getAllAppointments=async()=>{
   try {
     const {data}=await axios.get(backendUrl +'/api/admin/appointments',{headers:{atoken}})
     if(data.success){
       console.log("Data Appointments :",data.appointments)
       setAppointments(data.appointments)
+      console.log("Appointments::",data)
     } else{
       toast.error(error.message)
     }
@@ -73,7 +75,7 @@ const getAllAppointments=async()=>{
 
 //api to cancel appointment by admin
 const cancelAppointment=async(appointmentId)=>{
-   console.log("hey")
+  
   try {
    
     const {data}= await axios.post(backendUrl+'/api/admin/cancel-appointment',{appointmentId},{headers:{atoken}})

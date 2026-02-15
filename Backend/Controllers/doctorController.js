@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import appointmentModel from "../Models/appointmentModel.js";
 import mongoose from "mongoose";
+//api to change availability
 const changeAvailability = async (req, res) => {
     try {
         const { docId } = req.body;
@@ -17,6 +18,7 @@ const changeAvailability = async (req, res) => {
 
     }
 }
+//api list of doctors
 const doctorsList = async (req, res) => {
     try {
         const doctors = await doctorModel.find({}).select(['-password', '-email'])
@@ -60,7 +62,7 @@ const loginDoctor = async (req, res) => {
 const appointmentsDoctor = async (req, res) => {
     try {
 
-        const docId = req.docId;
+        const docId = req.docId; //passed in authDoc
         // console.log("docId",docId)
 
         // const objectId = new mongoose.Types.ObjectId(docId);

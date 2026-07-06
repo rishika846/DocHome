@@ -1,8 +1,48 @@
 @import "tailwindcss";
-.active hr{
-    @apply block;
-  
+
+/* Enable smooth scrolling across the entire site */
+html {
+  scroll-behavior: smooth;
 }
-::-webkit-scrollbar{
-    @apply hidden;
+
+/* Base transition for all interactive components */
+a, 
+button, 
+select, 
+input, 
+textarea, 
+[role="button"], 
+.cursor-pointer {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Micro-interaction: Active click press-down effect */
+button:active, 
+a:active, 
+[role="button"]:active, 
+.cursor-pointer:active {
+  transform: scale(0.97);
+}
+
+/* Smooth active menu indicators */
+.active hr {
+  @apply block;
+  animation: slideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Slide in animation for the nav indicator */
+@keyframes slideIn {
+  from {
+    width: 0;
+    opacity: 0;
+  }
+  to {
+    width: 60%;
+    opacity: 1;
+  }
+}
+
+/* Hide scrollbars but keep functionality */
+::-webkit-scrollbar {
+  @apply hidden;
 }

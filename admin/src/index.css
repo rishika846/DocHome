@@ -1,4 +1,30 @@
 @import "tailwindcss";
-::-webkit-scrollbar{
-    @apply hidden
+
+/* Enable smooth scrolling across the entire site */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Base transition for all interactive components */
+a, 
+button, 
+select, 
+input, 
+textarea, 
+[role="button"], 
+.cursor-pointer {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Micro-interaction: Active click press-down effect */
+button:active, 
+a:active, 
+[role="button"]:active, 
+.cursor-pointer:active {
+  transform: scale(0.97);
+}
+
+/* Hide scrollbars but keep functionality */
+::-webkit-scrollbar {
+  @apply hidden;
 }

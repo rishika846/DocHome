@@ -4,6 +4,13 @@ import { AdminContext } from '../../context/AdminContext'
 import { toast } from 'react-toastify'
 import axios from 'axios'
 
+const SpinnerIcon = ({ className = 'w-4 h-4 animate-spin' }) => (
+  <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+  </svg>
+)
+
 const AddDoctors = () => {
   const [docImg, setDocImg] = useState(false)
   const [name, setName] = useState('')
@@ -16,12 +23,15 @@ const AddDoctors = () => {
   const [degree, setDegree] = useState('')
   const [address1, setAddress1] = useState('')
   const [address2, setAddress2] = useState('')
+  const [loading, setLoading] = useState(false)
   const {atoken,backendUrl}=useContext(AdminContext)
   const onSubmitHandler= async(event)=>{
     event.preventDefault()
     //calling api to add doctor
     try {
+      setLoading(true)
       if(!docImg){
+        setLoading(false)
         return toast.error("image not selected")
 
       }
@@ -37,11 +47,6 @@ const AddDoctors = () => {
       formData.append('degree',degree)
        formData.append('address',JSON.stringify({line1:address1,line2:address2}))//because formdata can accept only strings and files
 
-      //  //consoling the form data
-      //  formData.forEach((value,key) => {
-      //   console.log(`${key} :${value}`);
-        
-      //  });
        const {data}= await axios.post(backendUrl + '/api/admin/add-doctor',formData,{headers:{atoken}})
        if(data.success){
         toast.success(data.message)
@@ -63,6 +68,8 @@ const AddDoctors = () => {
       toast.error(error.message)
       console.log(error)
       
+    } finally {
+      setLoading(false)
     }
 
 
@@ -149,7 +156,10 @@ const AddDoctors = () => {
           <p className='mt-4 mb-2'>About Doctor</p>
           <textarea onChange={(e)=>setAbout(e.target.value)} value={about}  className='w-full px-4 pt-2 border rounded' placeholder='write about doctor' rows={5} required></textarea>
         </div>
-        <button type='submit' className='bg-blue-500  px-10 py-3 text-white  rounded-full'>Add Doctor</button>
+        <button disabled={loading} type='submit' className='bg-blue-500 px-10 py-3 text-white rounded-full flex items-center gap-2 hover:bg-blue-600 disabled:bg-blue-300 transition-all duration-300'>
+          {loading && <SpinnerIcon />}
+          {loading ? 'Adding...' : 'Add Doctor'}
+        </button>
       </div>
     </form>
   )

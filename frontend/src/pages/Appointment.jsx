@@ -5,6 +5,7 @@ import { assets } from "../assets/assets";
 import RelatedDoctors from "../components/RelatedDoctors";
 import { toast } from "react-toastify";
 import axios from "axios";
+import Loader from "../components/Loader";
 
 const Appointment = () => {
   const navigate=useNavigate()
@@ -130,7 +131,11 @@ const Appointment = () => {
     console.log(docSlots);
   }, [docSlots]);
 
-  return docInfo && (
+  if (!docInfo) {
+    return <Loader />
+  }
+
+  return (
     <div>
       <div className="flex flex-col sm:flex-row gap-4">
         <div>

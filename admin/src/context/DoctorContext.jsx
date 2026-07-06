@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 export const DoctorContext = createContext();
 
 const DoctorContextProvider = ({ children }) => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+  const backendUrl = import.meta.env.VITE_BACKEND_URL ? import.meta.env.VITE_BACKEND_URL.replace(/\/$/, '') : 'http://localhost:4000';
   const [dtoken, setDtoken] = useState(() => localStorage.getItem("dtoken") || "");
   const [appointments, setAppointments] = useState([])
   const[dashData,setDashData]=useState(false)

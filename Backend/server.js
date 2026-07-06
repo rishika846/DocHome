@@ -22,6 +22,12 @@ connectCloudinary()
 app.use(express.json());//IF WE DON'T use thenn json data will not be parsed in javascript object
 app.use(cors())//app.use is used for mounting middlewares
 
+// Prevent routing issues caused by double slashes in URLs (e.g. //api/admin/login -> /api/admin/login)
+app.use((req, res, next) => {
+    req.url = req.url.replace(/\/+/g, '/');
+    next();
+});
+
 //api endpoints
 app.use('/api/admin',adminRouter)//localhost:4000/api/admin/add-doctor
 app.use('/api/doctor',doctorRouter)

@@ -64,7 +64,8 @@ const getAllAppointments=async()=>{
       setAppointments(data.appointments)
       console.log("Appointments::",data)
     } else{
-      toast.error(error.message)
+      /* FIX (PLACEMENT-READY): Changed error.message to data.message to prevent ReferenceError */
+      toast.error(data.message)
     }
     
   } catch (error) {
@@ -83,9 +84,11 @@ const cancelAppointment=async(appointmentId)=>{
       console.log("data",data)
       toast.success(data.message)
       getAllAppointments()
+      /* FIX (PLACEMENT-READY): Refresh dashboard stats to keep them synchronized immediately */
+      getDashData()
     }
     else{
-      console.log(error)
+      /* FIX (PLACEMENT-READY): Removed console.log(error) to prevent ReferenceError */
       toast.error(data.message)
     }
     

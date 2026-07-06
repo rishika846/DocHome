@@ -5,6 +5,7 @@ import doctorModel from '../Models/doctorModel.js'
 import jwt from 'jsonwebtoken'
 import appointmentModel from '../Models/appointmentModel.js'
 import userModel from '../Models/userModel.js'
+import fs from 'fs'
 //API FOR ADDING DOCTOR
 const addDoctor = async (req, res) => {
     try {
@@ -45,6 +46,14 @@ const addDoctor = async (req, res) => {
         const imageUpload = await cloudinary.uploader.upload(imageFile.path, { resource_type: "image" })
         const imageUrl = imageUpload.secure_url
 
+        /*
+          FIX (PLACEMENT-READY): Delete temporary file from local disk after upload.
+          Multer saves files to local temp storage, which must be cleaned up to prevent disk leaks.
+        */
+        if (fs.existsSync(imageFile.path)) {
+            fs.unlinkSync(imageFile.path)
+        }
+
         const doctorData = {
             name,
             email,
@@ -71,7 +80,15 @@ const addDoctor = async (req, res) => {
 
     } catch (error) {
         console.log(error)
-        res.json({ success: false, message: error })
+        // Clean up temp file on error
+        if (req.file && fs.existsSync(req.file.path)) {
+            try {
+                fs.unlinkSync(req.file.path)
+            } catch (unlinkError) {
+                console.log("Failed to clean up file:", unlinkError.message)
+            }
+        }
+        res.json({ success: false, message: error.message })
 
     }
 }
@@ -80,12 +97,15 @@ const loginAdmin = async  (req, res) => {
     try {
         // console.log(req.body);
         const { email, password } = req.body;
-        const salt = await bcrypt.genSalt(10)
-        const hashedAdminPassword = await bcrypt.hash(password, salt)
 
+        /*
+          FIX (PLACEMENT-READY): Simplified admin authentication.
+          Removed generating bcrypt hash from ADMIN_PASSWORD during login. 
+          This avoids sending a password hash inside the JWT payload.
+        */
         if (email === process.env.ADMIN_EMAIL && password === process.env.ADMIN_PASSWORD) {
             const atoken = jwt.sign(
-                { email, hashedAdminPassword},
+                { email },
                 process.env.JWT_SECRET,
                 { expiresIn: '7d' } 
             );

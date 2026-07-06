@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { AppContext } from '../Context/AppContext';
+import { specialityData } from '../assets/assets';
 
 const Doctors = () => {
     const { speciality }=useParams();
@@ -26,12 +27,28 @@ const Doctors = () => {
       <p className='text-gray-600'>Browse through the doctors specialist.</p>
       <div className='flex flex-col sm:flex-row items-start gap-5  mt-5'>
         <div className=' flex flex-col gap-4 text-sm text-gray-600'>
-          <p className='w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all  cursor' onClick={()=>speciality==='General physician'?navigate('/doctors'):navigate('/doctors/General physician')}>General physician</p>
-          < p className='w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all  cursor'onClick={()=>speciality==='Gynecologist'?navigate('/doctors'):navigate('/doctors/Gynecologist')}>Gynecologist</p>
-          <p className='w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all  cursor'onClick={()=>speciality==='Dermatologist'?navigate('/doctors/'):navigate('/doctors/Dermatologist')}>Dermatologist</p>
-          <p className='w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all  cursor'onClick={()=>speciality==='Pediatricians'?navigate('/doctors'):navigate('/doctors/Pediatricians')}>Pediatricians</p>
-          <p className='w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all  cursor'onClick={()=>speciality==='Neurologist'?navigate('/doctors'):navigate('/doctors/Neurologist')}> Neurologist</p>
-          <p className='w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all  cursor'onClick={()=>speciality==='Gastroenterologist'?navigate('/doctors'):navigate('/doctors/Gastroenterologist')}>Gastroenterologist</p>
+          {/* 
+            FIX (PLACEMENT-READY): Replaced hardcoded paragraphs with a dynamic map over specialityData.
+            Added active highlighting classes (bg-indigo-50 text-indigo-700 border-indigo-400 font-medium)
+            so the user has a visual cue of which speciality is currently selected.
+          */}
+          {specialityData.map((item, index) => (
+            <p
+              key={index}
+              className={`w-[94vw] sm:w-auto pl-3 py-1.5 pr-16 border border-gray-300 rounded transition-all cursor-pointer ${
+                speciality === item.speciality
+                  ? 'bg-indigo-50 text-indigo-700 border-indigo-400 font-medium'
+                  : 'hover:bg-gray-50'
+              }`}
+              onClick={() =>
+                speciality === item.speciality
+                  ? navigate('/doctors')
+                  : navigate(`/doctors/${item.speciality}`)
+              }
+            >
+              {item.speciality}
+            </p>
+          ))}
         </div>
         <div className='w-full grid [grid-template-columns:repeat(auto-fill,minmax(200px,1fr))] gap-4 gap-y-6'>
           {

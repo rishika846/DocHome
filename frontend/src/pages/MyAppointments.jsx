@@ -60,7 +60,8 @@ const MyAppointments = () => {
     <div>
       <p className='pb-3 mt-12 font-medium text-zinc-700 border-b'>My appointments</p>
       <div>
-        {appointments.slice(0, 3).map((item, index) => (
+        {/* FIX (PLACEMENT-READY): Removed slice(0, 3) hard limit so that patients can view and manage all of their appointments. */}
+        {appointments.map((item, index) => (
           <div className='grid grid-cols-[1fr_2fr] gap-4 sm:flex sm:gap-6 py-2 border-b' key={index}>
             <div>
               <img className='w-22 bg-indigo-50' src={item.docData.image} alt="" />
@@ -75,7 +76,8 @@ const MyAppointments = () => {
             </div>
             <div></div>
             <div className='flex flex-col gap-2 justify-end'>
-              {!item.cancelled && paidAppointments[item._id] ? (
+              {/* FIX (PLACEMENT-READY): Checking database 'item.payment' state instead of temporary component state */}
+              {!item.cancelled && item.payment ? (
                 <button
                   disabled
                   className='text-sm text-green-600 text-center sm:min-w-48 py-2 border rounded bg-green-100 cursor-not-allowed'
@@ -122,7 +124,7 @@ const MyAppointments = () => {
           <div className="bg-white p-6 rounded-lg w-[90%] max-w-md">
             <h2 className="text-lg font-semibold mb-4">Payment Details</h2>
             <form
-              onSubmit={(e) => {
+              onSubmit={async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const paymentInfo = {
@@ -133,14 +135,28 @@ const MyAppointments = () => {
                 };
                 console.log("Payment Info:", paymentInfo);
 
-                // Mark appointment as paid in state
-                setPaidAppointments((prev) => ({
-                  ...prev,
-                  [selectedAppointment._id]: true,
-                }));
+                /*
+                  FIX (PLACEMENT-READY): Hooked payment submission to backend.
+                  This calls /api/user/pay-appointment to persist the payment state in MongoDB.
+                */
+                try {
+                  const { data } = await axios.post(
+                    `${backendUrl}/api/user/pay-appointment`,
+                    { appointmentId: selectedAppointment._id },
+                    { headers: { token } }
+                  );
+                  if (data.success) {
+                    toast.success(data.message);
+                    getUserAppointments(); // Refresh list from backend
+                  } else {
+                    toast.error(data.message);
+                  }
+                } catch (error) {
+                  console.log(error);
+                  toast.error(error.message);
+                }
 
                 setShowPaymentForm(false); // close modal
-                toast.success("Payment submitted");
               }}
             >
               <div className="mb-3">

@@ -1,5 +1,4 @@
 import jwt from 'jsonwebtoken'
-import bcrypt from "bcrypt"
 
 // admin authentication middleware
 const authAdmin = async (req, res, next) => {
@@ -9,17 +8,15 @@ const authAdmin = async (req, res, next) => {
       return res.json({ success: false, message: 'Not Authorized. Login Again.' });
     }
     
-
     const token_decode = jwt.verify(atoken, process.env.JWT_SECRET);
-    console.log(token_decode.email)
-    console.log(token_decode.hashedAdminPassword)
-   // token_decode.hashedAdminPassword!==
-    const isMatch= await bcrypt.compare(process.env.ADMIN_PASSWORD, token_decode.hashedAdminPassword)
 
-    if (
-      token_decode.email !== process.env.ADMIN_EMAIL || !isMatch )
-      
-    {
+    /* 
+      FIX (PLACEMENT-READY): Removed bcrypt.compare check on process.env.ADMIN_PASSWORD.
+      Running bcrypt.compare on every single admin API request consumes excessive CPU cycles,
+      leading to severe response delays and exposing the server to Denial of Service (DoS) attacks.
+      JWT signature verification is sufficient to authenticate the admin token.
+    */
+    if (token_decode.email !== process.env.ADMIN_EMAIL) {
       return res.json({ success: false, message: 'Not Authorized. Login Again.' });
     }
 

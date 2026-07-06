@@ -5,6 +5,7 @@ import userModel from '../Models/userModel.js'
 import {v2 as cloudinary} from 'cloudinary'
 import doctorModel from '../Models/doctorModel.js'
 import appointmentModel from '../Models/appointmentModel.js'
+import fs from 'fs'
 
 
 // API to register user
@@ -120,6 +121,13 @@ const updateUser = async (req, res) => {
         resource_type: "image"
       });
       updateData.image = imageUpload.secure_url;
+
+      /*
+        FIX (PLACEMENT-READY): Delete temp image file after successful upload to Cloudinary.
+      */
+      if (fs.existsSync(imageFile.path)) {
+        fs.unlinkSync(imageFile.path);
+      }
     }
 
     // Single update
@@ -129,6 +137,14 @@ const updateUser = async (req, res) => {
 
   } catch (error) {
     console.log(error);
+    // Clean up temp file on error
+    if (req.file && fs.existsSync(req.file.path)) {
+      try {
+        fs.unlinkSync(req.file.path)
+      } catch (unlinkError) {
+        console.log("Failed to clean up file:", unlinkError.message)
+      }
+    }
     res.json({ success: false, message: error.message });
   }
 };
@@ -140,7 +156,12 @@ const bookAppointment = async (req, res) => {
     const userId = req.userId; 
     const {  docId, slotDate, slotTime } = req.body
 
-    const docData = await doctorModel.findById(docId).select('-password')
+    /*
+      FIX (PLACEMENT-READY): Added .lean() to database queries.
+      This fetches plain JavaScript objects rather than complex Mongoose Documents.
+      It ensures delete docData.slots_booked removes properties cleanly and prevents saving Mongoose overhead to the database.
+    */
+    const docData = await doctorModel.findById(docId).select('-password').lean()
 
     if (!docData.available) {
       return res.json({ success: false, message: 'Doctor not available' })
@@ -150,8 +171,7 @@ const bookAppointment = async (req, res) => {
 
     // checking for slot availability
     console.log("Requested slotDate:", slotDate);
-console.log("Requested slotTime:", slotTime);
-// console.log("Already booked slots on this date:", doctors.slots_booked[slotDate]);
+    console.log("Requested slotTime:", slotTime);
 
     if (slots_booked[slotDate]) {
       if (slots_booked[slotDate].includes(slotTime)) {
@@ -168,7 +188,7 @@ console.log("Requested slotTime:", slotTime);
     slots_booked[slotDate]=[]
     slots_booked[slotDate].push(slotTime)
   }
-  const userData=await userModel.findById(userId).select('-password')
+  const userData=await userModel.findById(userId).select('-password').lean()
   delete docData.slots_booked
   const appointmentData = {
   userId,
@@ -219,8 +239,13 @@ const listAppointment=async (req,res)=>{
      const appointmentData=await appointmentModel.findById(appointmentId)
 
      //verify appointment user
+     /*
+       FIX (PLACEMENT-READY): Added missing return statement.
+       Without this return, unauthorized requests would show a message but continue
+       executing and cancel the appointment for other users anyway.
+     */
      if(appointmentData.userId!==userId){
-      res.json({success:false,message:'Unauthorized action'})
+       return res.json({success:false,message:'Unauthorized action'})
      }
      await appointmentModel.findByIdAndUpdate(appointmentId,{cancelled:true})
 
@@ -242,4 +267,33 @@ const listAppointment=async (req,res)=>{
 }
 
 
-export {registerUser,loginUser,getProfile,updateUser,bookAppointment,listAppointment,cancelAppointment}
+// API to pay for appointment online
+const payAppointment = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { appointmentId } = req.body;
+    
+    const appointmentData = await appointmentModel.findById(appointmentId);
+    
+    if (!appointmentData) {
+      return res.json({ success: false, message: "Appointment not found" });
+    }
+    
+    if (appointmentData.userId !== userId) {
+      return res.json({ success: false, message: "Unauthorized action" });
+    }
+    
+    /*
+      FIX (PLACEMENT-READY): Added database updates to persist payment status.
+      This ensures that payment state persists on page refresh and is visible to the doctor's dashboard.
+    */
+    await appointmentModel.findByIdAndUpdate(appointmentId, { payment: true });
+    
+    res.json({ success: true, message: "Payment successful" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export {registerUser,loginUser,getProfile,updateUser,bookAppointment,listAppointment,cancelAppointment,payAppointment}

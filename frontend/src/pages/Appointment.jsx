@@ -14,7 +14,8 @@ const Appointment = () => {
 
   const [docInfo, setDocInfo] = useState(null);
   const [docSlots, setDocSlots] = useState([]);
-  const [slotIndex, setSlotIndex] = useState();
+  /* FIX (PLACEMENT-READY): Default day index selection to 0 (first day) */
+  const [slotIndex, setSlotIndex] = useState(0);
   const [slotTime, setSlotTime] = useState("");
 
   const fetchDocInfo = () => {
@@ -23,84 +24,97 @@ const Appointment = () => {
     console.log(docInfo);
   };
 
-  const getAvailableSlots = async  () => {
+  /* 
+    FIX (PLACEMENT-READY): Group slots by day.
+    Instead of a flat array of all 140+ slots, we group slots by day (0 to 6) 
+    so the UI can render date selection and time slot selection in two separate clean flows.
+  */
+  const getAvailableSlots = async () => {
     let today = new Date();
-    let allSlots = [];
+    let groupedSlots = [];
 
     for (let i = 0; i < 7; i++) {
-      let currentDate = new Date(today);//creating a copy of today date
-      currentDate.setDate(today.getDate() + i);//creating ahead 7 dates from current date
+      let currentDate = new Date(today);
+      currentDate.setDate(today.getDate() + i);
 
       let endTime = new Date(today);
       endTime.setDate(today.getDate() + i);
-      endTime.setHours(21, 0, 0, 0); //9pm
+      endTime.setHours(21, 0, 0, 0); // 9pm
 
       // Set starting time
       if (today.getDate() === currentDate.getDate()) {
         currentDate.setHours(currentDate.getHours() > 10 ? currentDate.getHours() + 1 : 10);
         currentDate.setMinutes(currentDate.getMinutes() > 30 ? 30 : 0);
-        
       } else {
         currentDate.setHours(10);
         currentDate.setMinutes(0);
       }
 
+      let daySlots = [];
+
       while (currentDate < endTime) {
         let formattedTime = currentDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        let day = currentDate.getDate()
-        let month = currentDate.getMonth() + 1
-        let year = currentDate.getFullYear()
-         const slotDate = `${day}_${month}_${year}`;
-        const slotTime=formattedTime;
-        const isSlotAvailable=docInfo.slots_booked[slotDate] && docInfo.slots_booked[slotDate].includes(slotTime)?false:true
+        let day = currentDate.getDate();
+        let month = currentDate.getMonth() + 1;
+        let year = currentDate.getFullYear();
+        const slotDate = `${day}_${month}_${year}`;
+        const slotTime = formattedTime;
+        const isSlotAvailable = docInfo.slots_booked[slotDate] && docInfo.slots_booked[slotDate].includes(slotTime) ? false : true;
 
-       if(isSlotAvailable){
-         //add slot to array
-        allSlots.push({
-          datetime: new Date(currentDate),
-          time: formattedTime,
-        });
-       }
-        currentDate.setMinutes(currentDate.getMinutes() + 30); // next slot in 30 min
+        if (isSlotAvailable) {
+          daySlots.push({
+            datetime: new Date(currentDate),
+            time: formattedTime,
+          });
+        }
+        currentDate.setMinutes(currentDate.getMinutes() + 30);
       }
+
+      // Store both the day date representation and its specific slots
+      groupedSlots.push({
+        date: new Date(today.getTime() + i * 24 * 60 * 60 * 1000),
+        slots: daySlots
+      });
     }
 
-    setDocSlots(allSlots);
+    setDocSlots(groupedSlots);
   };
+
   const bookAppointment = async () => {
-  if (!token) {
-    toast.warn('Login to book appointment');
-    return navigate('/login');
-  }
+    if (!token) {
+      toast.warn('Login to book appointment');
+      return navigate('/login');
+    }
+    if (!slotTime) {
+      toast.warn('Please select a time slot');
+      return;
+    }
 
-  try {
-    const date = docSlots[slotIndex].datetime;
+    try {
+      /* FIX (PLACEMENT-READY): Adapted bookAppointment to use the new grouped slots data structure */
+      const date = docSlots[slotIndex].date;
 
-    let day = date.getDate();
-    let month = date.getMonth() + 1;
-    let year = date.getFullYear();
+      let day = date.getDate();
+      let month = date.getMonth() + 1;
+      let year = date.getFullYear();
 
-    const slotDate = `${day}_${month}_${year}`;
-    const slotTime = docSlots[slotIndex].time;
+      const slotDate = `${day}_${month}_${year}`;
 
+      console.log("🕒 Booked Slot Date:", slotDate, "Time:", slotTime);
+      const {data}= await axios.post(backendUrl + '/api/user/book-appointment',{docId,slotDate,slotTime},{headers:{token}})
+      if (data.success) {
+        toast.success(data.message)
+        getDoctorsData()
+        navigate('/my-appointments')
+      } else {
+        toast.error(data.message)
+      }
 
-    console.log("🕒 Booked Slot:", date);
-    console.log("📅 Formatted Slot Date:", slotDate);
-    const {data}= await axios.post(backendUrl + '/api/user/book-appointment',{docId,slotDate,slotTime},{headers:{token}})
-    if (data.success) {
-     toast.success(data.message)
-     getDoctorsData()
-     navigate('/my-appointments')
-}   else {
-    toast.error(data.message)
-}
-
-  } catch (error) {
-    console.log("❌ Error booking slot:", error.message);
-    toast.error("Failed to book appointment");
-  }
-};
-
+    } catch (error) {
+      console.log("❌ Error booking slot:", error.message);
+      toast.error("Failed to book appointment");
+    }
+  };
 
   useEffect(() => {
     fetchDocInfo();
@@ -151,21 +165,48 @@ const Appointment = () => {
           </p>
         </div>
       </div>
+      
       {/* booking slots */}
-      <div className="sm:ml-72 sm:pl-4 font-medium text-gray-700">
+      {/* 
+        FIX (PLACEMENT-READY): Refactored Layout.
+        Separated booking slot selector into Day Selection (date cards) 
+        and Time Selection (individual slot pills) to build a standard, premium medical booking experience.
+      */}
+      <div className="sm:ml-72 sm:pl-4 font-medium text-gray-700 mt-4">
         <p>Booking Slots</p>
-        <div className="flex gap-3 items-center w-full  overflow-x-scroll mt-4">
+        
+        {/* Step 1: Day Selector */}
+        <div className="flex gap-3 items-center w-full overflow-x-scroll mt-4">
           {
             docSlots.length && docSlots.map((item,index)=>(
-              <div onClick={()=>setSlotIndex(index)} className={`text-center py-6 min-w-16 rounded-full cursor-pointer ${slotIndex===index?'bg-blue-500 text-white':'border border-gray-200'}`} key={index}>
-                 <p>{daysOfWeek[new Date(item.datetime).getDay()]}</p>
-                 <p>{new Date(item.datetime).getDate()}</p>
-                 <p>{item.time}</p>
-                </div>
+              <div 
+                onClick={() => { setSlotIndex(index); setSlotTime(""); }} 
+                className={`text-center py-6 min-w-16 rounded-full cursor-pointer transition-all duration-300 ${slotIndex===index?'bg-blue-500 text-white':'border border-gray-200 hover:bg-gray-50'}`} 
+                key={index}
+              >
+                 <p>{item.date && daysOfWeek[item.date.getDay()]}</p>
+                 <p>{item.date && item.date.getDate()}</p>
+              </div>
             ))
           }
         </div>
-        <button onClick={bookAppointment} className="bg-blue-500 text-white text-sm font-medium px-14 py-3  rounded-full my-6">Book  an Appointment</button>
+
+        {/* Step 2: Time Selector for the Selected Day */}
+        <div className="flex items-center gap-3 w-full overflow-x-scroll mt-4">
+          {
+            docSlots.length && docSlots[slotIndex].slots.map((item, index) => (
+              <p 
+                onClick={() => setSlotTime(item.time)} 
+                className={`text-sm font-light flex-shrink-0 px-5 py-2 rounded-full cursor-pointer transition-all duration-300 ${item.time === slotTime ? 'bg-blue-500 text-white' : 'text-gray-400 border border-gray-300 hover:bg-gray-50'}`} 
+                key={index}
+              >
+                {item.time.toLowerCase()}
+              </p>
+            ))
+          }
+        </div>
+
+        <button onClick={bookAppointment} className="bg-blue-500 text-white text-sm font-medium px-14 py-3  rounded-full my-6 hover:bg-blue-600 transition-all duration-300">Book  an Appointment</button>
 
       </div>
       {/* related doctors */}

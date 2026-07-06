@@ -38,6 +38,8 @@ const DoctorContextProvider = ({ children }) => {
       if(data.success){
         toast.success(data.message)
         getAppointments()
+        /* FIX (PLACEMENT-READY): Refresh dashboard stats to keep dashboard earnings and metrics synchronized immediately */
+        getDashData()
       } else{
         toast.error(data.message)
       }
@@ -55,6 +57,8 @@ const DoctorContextProvider = ({ children }) => {
       if(data.success){
         toast.success(data.message)
         getAppointments()
+        /* FIX (PLACEMENT-READY): Refresh dashboard stats to keep dashboard metrics synchronized immediately */
+        getDashData()
       } else{
         toast.error(data.message)
       }

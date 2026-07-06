@@ -9,12 +9,17 @@ const changeAvailability = async (req, res) => {
         const { docId } = req.body;
         const docData = await doctorModel.findById(docId);
         await doctorModel.findByIdAndUpdate(docId, { available: !docData.available });
+        
+        /* 
+          FIX (PLACEMENT-READY): Added successful response.
+          Previously this handler completed updates without sending a response,
+          leaving the admin dashboard UI spinner-frozen.
+        */
+        res.json({ success: true, message: "Availability Changed Successfully" })
 
     } catch (error) {
         console.log(error);
         res.json({ success: false, message: error.message })
-
-
 
     }
 }
@@ -37,8 +42,14 @@ const loginDoctor = async (req, res) => {
     try {
         const { email, password } = req.body;
         const doctor = await doctorModel.findOne({ email })
+        
+        /* 
+          FIX (PLACEMENT-READY): Added return statement.
+          Previously, missing return allowed execution to proceed to bcrypt.compare(..., doctor.password),
+          which crashed the server with a TypeError when the doctor was not found.
+        */
         if (!doctor) {
-            res.json({ success: false, message: "INVALID CREDENTIALS!!" })
+            return res.json({ success: false, message: "INVALID CREDENTIALS!!" })
         }
         const isMatch = await bcrypt.compare(password, doctor.password)
         if (isMatch) {
@@ -46,7 +57,8 @@ const loginDoctor = async (req, res) => {
             res.json({ success: true, token })
 
         } else {
-            res.json({ super: false, message: "INVALID PASSWORD" })
+            /* FIX (PLACEMENT-READY): Fixed 'super' typo to 'success' */
+            res.json({ success: false, message: "INVALID PASSWORD" })
         }
 
     } catch (error) {
@@ -111,6 +123,19 @@ const appointmentCancel = async (req, res) => {
         console.log("AppointmentDATA in Cancellation", appointmentData)
         if (appointmentData && appointmentData.docId === docId) {
             await appointmentModel.findByIdAndUpdate(appointmentId, { cancelled: true })
+
+            /*
+              FIX (PLACEMENT-READY): Release doctor slot upon cancellation by doctor.
+              Without this, the slot remained blocked even after cancellation.
+            */
+            const { slotDate, slotTime } = appointmentData
+            const doctorData = await doctorModel.findById(docId)
+            let slots_booked = doctorData.slots_booked
+            if (slots_booked && slots_booked[slotDate]) {
+                slots_booked[slotDate] = slots_booked[slotDate].filter(e => e !== slotTime)
+                await doctorModel.findByIdAndUpdate(docId, { slots_booked })
+            }
+
             return res.json({ success: true, message: "Appointment cancelled successfully" })
         }
         else {

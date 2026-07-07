@@ -4,6 +4,27 @@ DocHome is a modern, full-stack doctor appointment booking platform designed to 
 
 ---
 
+## 🔗 Live Deployments
+
+*   **Patient Portal:** [https://dochome-1.onrender.com](https://dochome-1.onrender.com)
+*   **Admin & Doctor Portal:** [https://dochome-admin-nrm4.onrender.com](https://dochome-admin-nrm4.onrender.com)
+
+---
+
+## 📌 Table of Contents
+
+- [🔗 Live Deployments](#-live-deployments)
+- [🚀 Features](#-features)
+- [🛠️ Technology Stack](#️-technology-stack)
+- [📂 Project Structure](#-project-structure)
+- [📐 High-Level Design (HLD)](#-high-level-design-hld)
+- [🔑 Authentication System](#-authentication-system)
+- [⚙️ Environment Configuration](#️-environment-configuration)
+- [🏃 Getting Started](#-getting-started)
+- [🔒 Security & Optimization Best Practices](#-security--optimization-best-practices)
+
+---
+
 ## 🚀 Features
 
 ### **Patient Portal (Frontend)**
@@ -41,6 +62,110 @@ DocHome/
 ├── frontend/         # Patient-facing React web client
 └── admin/            # Combined Admin and Doctor panel client
 ```
+
+---
+
+## 📐 High-Level Design (HLD)
+
+DocHome uses a multi-tier Client-Server architecture. The React applications communicate with a centralized Node.js/Express REST API backend that handles database operations, security (authentication & tokens), and media uploads.
+
+### **Architecture Overview & Data Flow**
+
+```mermaid
+graph TD
+    %% Styling
+    classDef client fill:#dbeafe,stroke:#2563eb,stroke-width:2px;
+    classDef server fill:#fef9c3,stroke:#ca8a04,stroke-width:2px;
+    classDef storage fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
+
+    %% Client Layer
+    Patient["💻 Patient Web App<br/>(React / Tailwind v4)"]:::client
+    Admin["⚙️ Admin & Doctor App<br/>(React / Tailwind v4)"]:::client
+
+    %% API Server Layer
+    Server["🛡️ Express API Server<br/>(Node.js Server)"]:::server
+    AuthMiddleware["🔑 JWT Auth Middleware<br/>(Verify Token)"]:::server
+    Controllers["📦 Route Controllers<br/>(Register, Login, Booking)"]:::server
+
+    %% Data & Assets Layer
+    Mongo[("🛢️ MongoDB Cluster<br/>(User / Doctor / Bookings)")]:::storage
+    Cloudinary["☁️ Cloudinary Storage<br/>(Doctor & User Profile Images)"]:::storage
+
+    %% Client to Server Flow
+    Patient -->|HTTPS API Requests| Server
+    Admin -->|HTTPS API Requests| Server
+
+    %% Server Internal Flow
+    Server --> AuthMiddleware
+    AuthMiddleware --> Controllers
+
+    %% Controller Interactions
+    Controllers -->|Mongoose Queries| Mongo
+    Controllers -->|Upload Image Buffer| Cloudinary
+```
+
+### **Component Responsibility**
+*   **Web Clients (Frontend & Admin):** Handles authentication state (localStorage token), user interface layout, form validations, dynamic slot selections, and responsive viewport sizing.
+*   **API Gateway & Controller (Backend):** Mounts sub-routers (`admin`, `doctor`, `user`), implements CORS and URL cleaning middleware, hashes passwords with `bcrypt`, generates and validates JSON Web Tokens (`jwt`), and handles image file streaming to Cloudinary via Multer memory buffers.
+*   **Database (MongoDB):** Relational collection modeling via Mongoose (e.g. referencing Doctor IDs in user Appointments) and schema-level index optimization.
+
+---
+
+## 🔑 Authentication System
+
+DocHome implements a secure, stateless, token-based authentication system utilizing **JSON Web Tokens (JWT)** and **bcrypt** password hashing. The auth architecture prevents database lookups on every incoming request, guaranteeing scalable and fast sub-millisecond API responses.
+
+### **Detailed Authentication & Middleware Flow**
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client as React Web Client (Patient / Admin)
+    participant Server as Express API Server
+    participant Middleware as Auth Middleware (authUser / authAdmin / authDoctor)
+    participant DB as MongoDB Database
+
+    Note over Client, Server: Phase 1: Authentication & Token Issuance
+    Client->>Server: POST /api/user/login { email, password }
+    Server->>DB: Query User by email
+    DB-->>Server: Return User Document (contains hashed password)
+    Server->>Server: Validate Credentials (bcrypt.compare)
+    alt Credentials Valid
+        Server->>Server: Generate JWT payload: { id: user._id }
+        Server->>Server: Sign Token with JWT_SECRET & Algorithm HS256
+        Server-->>Client: HTTP 200 { success: true, token: "eyJhbGciOi..." }
+        Client->>Client: Cache token in localStorage & AppContext state
+    else Credentials Invalid
+        Server-->>Client: HTTP 400 { success: false, message: "Invalid credentials" }
+    end
+
+    Note over Client, DB: Phase 2: Accessing Protected Endpoints (e.g., Get Profile)
+    Client->>Server: GET /api/user/get-profile (Headers: { token: "eyJhbGciOi..." })
+    Server->>Middleware: Intercept request & extract token header
+    alt Token Missing
+        Middleware-->>Client: HTTP 401 { success: false, message: "Not Authorized. Login again." }
+    else Token Present
+        Middleware->>Middleware: jwt.verify(token, JWT_SECRET)
+        alt Signature / Expiry Valid
+            Middleware->>Middleware: Extract decoded payload { id: userId }
+            Middleware->>Middleware: Mutate req object (req.body.userId = id)
+            Middleware->>Server: Call next() to proceed to Controller
+            Server->>DB: Query User Profile by ID (exclude password)
+            DB-->>Server: Return User Profile Details
+            Server-->>Client: HTTP 200 { success: true, userData: { name, email, ... } }
+        else Token Invalid / Tampered
+            Middleware-->>Client: HTTP 401 { success: false, message: "Token Verification Failed" }
+        end
+    end
+```
+
+### **Security Controls Implemented**
+*   **One-Way Hashing:** Passwords are hashed with salt rounds using `bcrypt` during registration and are never stored in raw text format.
+*   **Separated Auth Layers:** Three distinct middlewares isolate contexts:
+    *   `authUser.js` - Secures endpoints matching patient actions.
+    *   `authDoctor.js` - Secures doctor-specific action routes.
+    *   `authAdmin.js` - Authenticates administrative operations (using a predefined admin email/password check).
+*   **Stateless Token Verification:** Authenticated routes verify signatures cryptographically using the signature verified with `process.env.JWT_SECRET`, meaning no session lookups are made to the database.
 
 ---
 

@@ -1,6 +1,6 @@
 # DocHome 🩺
 
-DocHome is a modern, full-stack doctor appointment booking platform designed to connect patients, doctors, and administrators seamlessly. It features a complete patient portal, a dedicated admin control panel, and a robust REST API backend.
+DocHome is a modern, MERN stack doctor appointment booking platform designed to connect patients, doctors, and administrators seamlessly. It features a complete patient portal, a dedicated admin control panel, and a robust REST API backend.
 
 ---
 

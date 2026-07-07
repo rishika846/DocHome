@@ -11,13 +11,59 @@ DocHome is a modern, full-stack doctor appointment booking platform designed to 
 
 ---
 
+## 📐 High-Level Design (HLD)
+
+DocHome uses a multi-tier Client-Server architecture. The React applications communicate with a centralized Node.js/Express REST API backend that handles database operations, security (authentication & tokens), and media uploads.
+
+### **Architecture Overview & Data Flow**
+
+```mermaid
+graph TD
+    %% Styling
+    classDef client fill:#dbeafe,stroke:#2563eb,stroke-width:2px;
+    classDef server fill:#fef9c3,stroke:#ca8a04,stroke-width:2px;
+    classDef storage fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
+
+    %% Client Layer
+    Patient["💻 Patient Web App<br/>(React / Tailwind v4)"]:::client
+    Admin["⚙️ Admin & Doctor App<br/>(React / Tailwind v4)"]:::client
+
+    %% API Server Layer
+    Server["🛡️ Express API Server<br/>(Node.js Server)"]:::server
+    AuthMiddleware["🔑 JWT Auth Middleware<br/>(Verify Token)"]:::server
+    Controllers["📦 Route Controllers<br/>(Register, Login, Booking)"]:::server
+
+    %% Data & Assets Layer
+    Mongo[("🛢️ MongoDB Cluster<br/>(User / Doctor / Bookings)")]:::storage
+    Cloudinary["☁️ Cloudinary Storage<br/>(Doctor & User Profile Images)"]:::storage
+
+    %% Client to Server Flow
+    Patient -->|HTTPS API Requests| Server
+    Admin -->|HTTPS API Requests| Server
+
+    %% Server Internal Flow
+    Server --> AuthMiddleware
+    AuthMiddleware --> Controllers
+
+    %% Controller Interactions
+    Controllers -->|Mongoose Queries| Mongo
+    Controllers -->|Upload Image Buffer| Cloudinary
+```
+
+### **Component Responsibility**
+*   **Web Clients (Frontend & Admin):** Handles authentication state (localStorage token), user interface layout, form validations, dynamic slot selections, and responsive viewport sizing.
+*   **API Gateway & Controller (Backend):** Mounts sub-routers (`admin`, `doctor`, `user`), implements CORS and URL cleaning middleware, hashes passwords with `bcrypt`, generates and validates JSON Web Tokens (`jwt`), and handles image file streaming to Cloudinary via Multer memory buffers.
+*   **Database (MongoDB):** Relational collection modeling via Mongoose (e.g. referencing Doctor IDs in user Appointments) and schema-level index optimization.
+
+---
+
 ## 📌 Table of Contents
 
 - [🔗 Live Deployments](#-live-deployments)
+- [📐 High-Level Design (HLD)](#-high-level-design-hld)
 - [🚀 Features](#-features)
 - [🛠️ Technology Stack](#️-technology-stack)
 - [📂 Project Structure](#-project-structure)
-- [📐 High-Level Design (HLD)](#-high-level-design-hld)
 - [🔑 Authentication System](#-authentication-system)
 - [⚙️ Environment Configuration](#️-environment-configuration)
 - [🏃 Getting Started](#-getting-started)
@@ -62,52 +108,6 @@ DocHome/
 ├── frontend/         # Patient-facing React web client
 └── admin/            # Combined Admin and Doctor panel client
 ```
-
----
-
-## 📐 High-Level Design (HLD)
-
-DocHome uses a multi-tier Client-Server architecture. The React applications communicate with a centralized Node.js/Express REST API backend that handles database operations, security (authentication & tokens), and media uploads.
-
-### **Architecture Overview & Data Flow**
-
-```mermaid
-graph TD
-    %% Styling
-    classDef client fill:#dbeafe,stroke:#2563eb,stroke-width:2px;
-    classDef server fill:#fef9c3,stroke:#ca8a04,stroke-width:2px;
-    classDef storage fill:#dcfce7,stroke:#16a34a,stroke-width:2px;
-
-    %% Client Layer
-    Patient["💻 Patient Web App<br/>(React / Tailwind v4)"]:::client
-    Admin["⚙️ Admin & Doctor App<br/>(React / Tailwind v4)"]:::client
-
-    %% API Server Layer
-    Server["🛡️ Express API Server<br/>(Node.js Server)"]:::server
-    AuthMiddleware["🔑 JWT Auth Middleware<br/>(Verify Token)"]:::server
-    Controllers["📦 Route Controllers<br/>(Register, Login, Booking)"]:::server
-
-    %% Data & Assets Layer
-    Mongo[("🛢️ MongoDB Cluster<br/>(User / Doctor / Bookings)")]:::storage
-    Cloudinary["☁️ Cloudinary Storage<br/>(Doctor & User Profile Images)"]:::storage
-
-    %% Client to Server Flow
-    Patient -->|HTTPS API Requests| Server
-    Admin -->|HTTPS API Requests| Server
-
-    %% Server Internal Flow
-    Server --> AuthMiddleware
-    AuthMiddleware --> Controllers
-
-    %% Controller Interactions
-    Controllers -->|Mongoose Queries| Mongo
-    Controllers -->|Upload Image Buffer| Cloudinary
-```
-
-### **Component Responsibility**
-*   **Web Clients (Frontend & Admin):** Handles authentication state (localStorage token), user interface layout, form validations, dynamic slot selections, and responsive viewport sizing.
-*   **API Gateway & Controller (Backend):** Mounts sub-routers (`admin`, `doctor`, `user`), implements CORS and URL cleaning middleware, hashes passwords with `bcrypt`, generates and validates JSON Web Tokens (`jwt`), and handles image file streaming to Cloudinary via Multer memory buffers.
-*   **Database (MongoDB):** Relational collection modeling via Mongoose (e.g. referencing Doctor IDs in user Appointments) and schema-level index optimization.
 
 ---
 

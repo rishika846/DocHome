@@ -6,13 +6,28 @@ import { AppContext } from '../Context/AppContext';
 const Navbar = () => {
   const navigate=useNavigate();
   const [showmenu,setShowmenu]=useState(false);
+  const [isLoggingOut,setIsLoggingOut]=useState(false);
   const {token,setToken,userData}=useContext(AppContext);
+  
   const logout=()=>{
-    setToken(false)
-    localStorage.removeItem('token')
+    setIsLoggingOut(true)
+    setTimeout(()=>{
+      setToken(false)
+      localStorage.removeItem('token')
+      setIsLoggingOut(false)
+      navigate('/')
+    }, 800)
   }
+  
   return  (
-    <div className='flex items-center justify-between text-sm py-4 mb-5 border-b  border-b-gray-400'>
+    <>
+      {isLoggingOut && (
+        <div className='fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center gap-3'>
+          <div className='w-12 h-12 border-4 border-gray-200 border-t-blue-500 rounded-full animate-spin'></div>
+          <p className='text-zinc-600 font-medium animate-pulse text-base'>Logging out, please wait...</p>
+        </div>
+      )}
+      <div className='flex items-center justify-between text-sm py-4 mb-5 border-b  border-b-gray-400'>
         <img onClick={()=>navigate("/")} className='w-44  cursor-pointer'src={assets.DocHomeLogo} alt="" />
         <ul className='hidden md:flex items-start gap-5 font-medium'>
             <NavLink to='/'>
@@ -58,6 +73,7 @@ const Navbar = () => {
       
 
     </div>
+    </>
   )
 }
 

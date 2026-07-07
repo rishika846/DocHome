@@ -233,8 +233,4 @@ Open `http://localhost:5174` (or the port specified by Vite) in your browser.
 
 ---
 
-## 🔒 Security & Optimization Best Practices
 
-*   **Lean Mongoose Queries:** Utilizing `.lean()` for read-only queries to bypass model hydration and save backend memory.
-*   **Secure API Routers:** API inputs are validated, and secure headers are recommended for production setups.
-*   **Dynamic Image Optimization:** Cloudinary URLs are queried using format and quality automation parameters to minimize bundle loads.

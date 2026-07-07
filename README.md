@@ -102,11 +102,41 @@ graph TD
 
 ## 📂 Project Structure
 
-```
+```text
 DocHome/
-├── Backend/          # Node/Express API, database schemas, and routes
-├── frontend/         # Patient-facing React web client
-└── admin/            # Combined Admin and Doctor panel client
+├── Backend/                    # Node.js & Express REST API Server
+│   ├── Config/                 # Connection setup for MongoDB & Cloudinary
+│   ├── Controllers/            # Express controllers handling business logic
+│   ├── Middlewares/            # Authentication & verification middlewares (JWT)
+│   ├── Models/                 # MongoDB Mongoose schemas & data models
+│   ├── Routes/                 # Express API routes mapping URL endpoints
+│   ├── .env                    # Backend credentials configuration (local only)
+│   └── server.js               # Main server file and API entry point
+│
+├── frontend/                   # Patient Portal (React.js client)
+│   ├── src/
+│   │   ├── assets/             # Static files (images, icons, svgs, stylesheets)
+│   │   ├── components/         # Reusable UI elements (Navbar, Header, Banner)
+│   │   ├── Context/            # AppContext provider for global state management
+│   │   ├── pages/              # Portal page views (Home, Profile, Appointments)
+│   │   ├── App.jsx             # React application routes and wrapper layout
+│   │   └── main.jsx            # DOM renderer entry point
+│   ├── package.json            # Client configuration and dependencies
+│   └── vite.config.js          # Vite compilation settings
+│
+└── admin/                      # Admin & Doctor Management Portal (React.js client)
+    ├── src/
+    │   ├── assets/             # Branding logos and icons
+    │   ├── components/         # Shared dashboard structures (Sidebar, Navbar)
+    │   ├── context/            # React Context providers for Admin & Doctor flows
+    │   ├── pages/              # Dashboard page layouts
+    │   │   ├── Admin/          # Admin-specific pages (AddDoctor, Bookings)
+    │   │   ├── Doctor/         # Doctor-specific pages (Profile, Appointments)
+    │   │   └── Login.jsx       # Universal portal login page
+    │   ├── App.jsx             # Admin/Doctor route management
+    │   └── main.jsx            # Entry renderer configuration
+    ├── package.json            # Project dependencies config
+    └── vite.config.js          # Vite configurations
 ```
 
 ---
